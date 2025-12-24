@@ -117,7 +117,6 @@
   // 🔹 Referencia a Firebase
   const historicoRef = database.ref("historico");
 
-  // 🔹 Escuchar cambios en tiempo real
 historicoRef.on("value", snapshot => {
   const data = snapshot.val();
 
@@ -127,13 +126,12 @@ historicoRef.on("value", snapshot => {
 
   if (!data) return;
 
-  // 🔹 Convertir a array y ordenar por fecha
+  // Convertir a array y ordenar por timestamp
   const registros = Object.entries(data)
-    .sort((a, b) => a[0].localeCompare(b[0])) // orden cronológico
-    .slice(-30); // 🔥 SOLO LOS ÚLTIMOS 30
+    .sort((a, b) => a[1].timestamp - b[1].timestamp)
+    .slice(-30);
 
   registros.forEach(([key, registro]) => {
-
     // ---- TABLA ----
     const fila = document.createElement("tr");
     fila.innerHTML = `
@@ -143,7 +141,7 @@ historicoRef.on("value", snapshot => {
     tabla.appendChild(fila);
 
     // ---- GRAFICO ----
-    labels.push(key.split("_")[1]); // solo la hora
+    labels.push(new Date(registro.timestamp * 1000).toLocaleTimeString('es-CO', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     values.push(registro.valor);
   });
 
