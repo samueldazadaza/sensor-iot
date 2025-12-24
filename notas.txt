@@ -1,0 +1,28 @@
+// ---------------- WIFI ----------------
+#define WIFI_SSID "nokia_1100"
+#define WIFI_PASSWORD "wifisinclave"
+
+// ---------------- FIREBASE ----------------
+#define API_KEY "AIzaSyCEvyKVl3Bhan5J_J_zTHlYdeQCug30ge4"
+#define DATABASE_URL "https://motorcycle-telemetry-4cf4c-default-rtdb.firebaseio.com/" 
+
+
+
+✅✅✅
+// ---------------- WIFI ----------------
+#define WIFI_SSID "nokia_1100"
+#define WIFI_PASSWORD "wifisinclave"
+
+// ---------------- FIREBASE ----------------
+#define API_KEY "AIzaSyCEvyKVl3Bhan5J_J_zTHlYdeQCug30ge4"
+#define DATABASE_URL "https://motorcycle-telemetry-4cf4c-default-rtdb.firebaseio.com/"
+👍👍👍👍
+
+
+
+
+------------------------------------------------------------
+mi esp32 funciona con la placa: ESP32-WROOM-DA 
+COM5
+
+CUANDO APAREZCAN puntos suspensivos; .......... (presionar una ves botón "boot" en tarjeta electronica // comenzara a cargar el código)

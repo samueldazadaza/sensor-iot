@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Histórico ESP32</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    canvas {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background: #1976d2;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>📊 Sensor Capacitivo - Histórico</h2>
+
+<canvas id="grafico" height="120"></canvas>
+
+<table>
+  <thead>
+    <tr>
+      <th>Fecha y Hora</th>
+      <th>Valor</th>
+    </tr>
+  </thead>
+  <tbody id="tablaDatos"></tbody>
+</table>
+
+<script>
+  // 🔹 Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCEvyKVl3Bhan5J_J_zTHlYdeQCug30ge4",
+    databaseURL: "https://motorcycle-telemetry-4cf4c-default-rtdb.firebaseio.com"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const ref = firebase.database().ref("historico");
+
+  // 🔹 Chart.js setup
+  const ctx = document.getElementById("grafico").getContext("2d");
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Valor sensor',
+        data: [],
+        borderColor: 'blue',
+        fill: false,
+        tension: 0.2
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // 🔹 Escuchar Firebase
+  ref.on("value", snapshot => {
+    const datos = snapshot.val();
+    if (!datos) return;
+
+    const etiquetas = [];
+    const valores = [];
+
+    Object.keys(datos).forEach(fecha => {
+      etiquetas.push(fecha.split("_")[1]); // solo hora
+      valores.push(datos[fecha].valor);
+    });
+
+    // Actualizar tabla
+    const tabla = document.getElementById("tablaDatos");
+    tabla.innerHTML = "";
+    Object.keys(datos).forEach(fecha => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${fecha.replace("_"," ")}</td>
+        <td>${datos[fecha].valor}</td>
+      `;
+      tabla.appendChild(fila);
+    });
+
+    // Actualizar gráfico
+    chart.data.labels = etiquetas;
+    chart.data.datasets[0].data = valores;
+    chart.update();
+  });
+</script>
+
+</body>
+</html>
