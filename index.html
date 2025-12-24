@@ -118,33 +118,38 @@
   const historicoRef = database.ref("historico");
 
   // 🔹 Escuchar cambios en tiempo real
-  historicoRef.on("value", snapshot => {
-    const data = snapshot.val();
+historicoRef.on("value", snapshot => {
+  const data = snapshot.val();
 
-    labels.length = 0;
-    values.length = 0;
-    tabla.innerHTML = "";
+  labels.length = 0;
+  values.length = 0;
+  tabla.innerHTML = "";
 
-    if (!data) return;
+  if (!data) return;
 
-    Object.keys(data).forEach(key => {
-      const registro = data[key];
+  // 🔹 Convertir a array y ordenar por fecha
+  const registros = Object.entries(data)
+    .sort((a, b) => a[0].localeCompare(b[0])) // orden cronológico
+    .slice(-30); // 🔥 SOLO LOS ÚLTIMOS 30
 
-      // Tabla
-      const fila = document.createElement("tr");
-      fila.innerHTML = `
-        <td>${key.replaceAll("_", " ")}</td>
-        <td>${registro.valor}</td>
-      `;
-      tabla.appendChild(fila);
+  registros.forEach(([key, registro]) => {
 
-      // Gráfico
-      labels.push(key.split("_")[1]);
-      values.push(registro.valor);
-    });
+    // ---- TABLA ----
+    const fila = document.createElement("tr");
+    fila.innerHTML = `
+      <td>${key.replaceAll("_", " ")}</td>
+      <td>${registro.valor}</td>
+    `;
+    tabla.appendChild(fila);
 
-    chart.update();
+    // ---- GRAFICO ----
+    labels.push(key.split("_")[1]); // solo la hora
+    values.push(registro.valor);
   });
+
+  chart.update();
+});
+
 </script>
 
 </body>
