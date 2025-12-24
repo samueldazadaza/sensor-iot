@@ -26,32 +26,20 @@ FirebaseConfig config;
 
 // ---------------- TIEMPO ----------------
 unsigned long lastRead = 0;
-const unsigned long interval = 10000; // 5 segundos
+const unsigned long interval = 15000; // 15 segundos
 
 // ---------------- LED FUNCIONES ----------------
-void parpadear(int veces, int tiempo) {
-  for (int i = 0; i < veces; i++) {
-    digitalWrite(LED_PIN, HIGH);
-    delay(tiempo);
-    digitalWrite(LED_PIN, LOW);
-    delay(tiempo);
-  }
-}
-
-void parpadeoRapido3s() {
-  unsigned long inicio = millis();
-  while (millis() - inicio < 3000) {
-    digitalWrite(LED_PIN, HIGH);
-    delay(100);
-    digitalWrite(LED_PIN, LOW);
-    delay(100);
-  }
+// Función simple: enciende LED el tiempo indicado y apaga
+void parpadear(int tiempoEncendido) {
+  digitalWrite(LED_PIN, HIGH);
+  delay(tiempoEncendido);
+  digitalWrite(LED_PIN, LOW);
 }
 
 // ---------------- SETUP ----------------
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(3000);
 
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
@@ -71,24 +59,16 @@ void setup() {
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   Serial.println("Hora sincronizada");
 
-// -------- FIREBASE --------
-config.api_key = API_KEY;
-config.database_url = DATABASE_URL;
+  // -------- FIREBASE --------
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
 
-// Signup anónimo (OBLIGATORIO)
-if (Firebase.signUp(&config, &auth, "", "")) {
-  Serial.println("Firebase signup OK");
-} else {
-  Serial.printf("Firebase signup ERROR: %s\n", config.signer.signupError.message.c_str());
-}
-
-Firebase.begin(&config, &auth);
-Firebase.reconnectWiFi(true);
-
-
-  // Autenticación anónima
-  auth.user.email = "";
-  auth.user.password = "";
+  // Signup anónimo
+  if (Firebase.signUp(&config, &auth, "", "")) {
+    Serial.println("Firebase signup OK");
+  } else {
+    Serial.printf("Firebase signup ERROR: %s\n", config.signer.signupError.message.c_str());
+  }
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
@@ -101,15 +81,15 @@ void loop() {
   if (millis() - lastRead >= interval) {
     lastRead = millis();
 
-    // Leer sensor
+    // ---- Leer sensor ----
     int sensorValue = analogRead(SENSOR_PIN);
     Serial.print("Sensor: ");
     Serial.println(sensorValue);
 
-    // LED parpadea 1 vez (lectura)
-    parpadear(1, 300);
+    // ---- LED lectura ----
+    parpadear(300); // LED encendido 300 ms para indicar lectura
 
-    // Obtener fecha y hora
+    // ---- Obtener fecha y hora ----
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
       Serial.println("Error obteniendo hora");
@@ -121,20 +101,20 @@ void loop() {
 
     long timestamp = time(nullptr);
 
-    // Crear JSON
+    // ---- Crear JSON ----
     FirebaseJson json;
     json.set("valor", sensorValue);
     json.set("timestamp", timestamp);
 
     String ruta = "/historico/" + String(fechaHora);
 
-    // Enviar a Firebase
+    // ---- Enviar a Firebase ----
     if (Firebase.RTDB.setJSON(&fbdo, ruta.c_str(), &json)) {
       Serial.print("Dato guardado: ");
       Serial.println(ruta);
 
-      // LED parpadeo rápido 3s (guardado OK)
-      parpadeoRapido3s();
+      // ---- LED envío ----
+      parpadear(100); // LED encendido 100 ms para indicar envío
     } else {
       Serial.println("Error Firebase:");
       Serial.println(fbdo.errorReason());
