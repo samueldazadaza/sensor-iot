@@ -12,7 +12,7 @@
 
 // ---------------- FIREBASE ----------------
 #define API_KEY "AIzaSyCEvyKVl3Bhan5J_J_zTHlYdeQCug30ge4"
-#define DATABASE_URL "https://tu-proyecto-default-rtdb.firebaseio.com"
+#define DATABASE_URL "https://motorcycle-telemetry-4cf4c-default-rtdb.firebaseio.com/"
 
 // ---------------- NTP ----------------
 const char* ntpServer = "pool.ntp.org";
@@ -26,7 +26,7 @@ FirebaseConfig config;
 
 // ---------------- TIEMPO ----------------
 unsigned long lastRead = 0;
-const unsigned long interval = 5000; // 5 segundos
+const unsigned long interval = 10000; // 5 segundos
 
 // ---------------- LED FUNCIONES ----------------
 void parpadear(int veces, int tiempo) {
@@ -71,9 +71,20 @@ void setup() {
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   Serial.println("Hora sincronizada");
 
-  // -------- FIREBASE --------
-  config.api_key = API_KEY;
-  config.database_url = DATABASE_URL;
+// -------- FIREBASE --------
+config.api_key = API_KEY;
+config.database_url = DATABASE_URL;
+
+// Signup anónimo (OBLIGATORIO)
+if (Firebase.signUp(&config, &auth, "", "")) {
+  Serial.println("Firebase signup OK");
+} else {
+  Serial.printf("Firebase signup ERROR: %s\n", config.signer.signupError.message.c_str());
+}
+
+Firebase.begin(&config, &auth);
+Firebase.reconnectWiFi(true);
+
 
   // Autenticación anónima
   auth.user.email = "";
