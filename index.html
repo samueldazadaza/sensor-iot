@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Histórico ESP32</title>
+  <title>Histórico Sensor ESP32</title>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,28 +14,41 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f2f2f2;
+      background: #f4f6f8;
+      margin: 0;
       padding: 20px;
     }
+
     h2 {
       text-align: center;
+      margin-bottom: 20px;
     }
-    canvas {
+
+    .contenedor {
+      display: flex;
+      gap: 20px;
+    }
+
+    .grafico, .tabla {
       background: white;
-      padding: 10px;
+      padding: 15px;
       border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      width: 50%;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      margin-top: 20px;
+      font-size: 14px;
     }
+
     th, td {
-      padding: 8px;
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
+      padding: 6px;
       text-align: center;
     }
+
     th {
       background: #1976d2;
       color: white;
@@ -45,19 +58,29 @@
 
 <body>
 
-<h2>📊 Sensor Capacitivo - Histórico</h2>
+<h2>Histórico Sensor ESP32</h2>
 
-<canvas id="grafico" height="120"></canvas>
+<div class="contenedor">
 
-<table>
-  <thead>
-    <tr>
-      <th>Fecha y Hora</th>
-      <th>Valor</th>
-    </tr>
-  </thead>
-  <tbody id="tablaDatos"></tbody>
-</table>
+  <!-- GRAFICO -->
+  <div class="grafico">
+    <canvas id="sensorChart"></canvas>
+  </div>
+
+  <!-- TABLA -->
+  <div class="tabla">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha y Hora</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody id="tablaDatos"></tbody>
+    </table>
+  </div>
+
+</div>
 
 <script>
   // 🔹 Firebase config
@@ -66,61 +89,60 @@
     databaseURL: "https://motorcycle-telemetry-4cf4c-default-rtdb.firebaseio.com"
   };
 
-  firebase.initializeApp(firebaseConfig);
-  const ref = firebase.database().ref("historico");
 
-  // 🔹 Chart.js setup
-  const ctx = document.getElementById("grafico").getContext("2d");
+  // 🔹 Inicializar Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  const tabla = document.getElementById("tablaDatos");
+  const ctx = document.getElementById("sensorChart").getContext("2d");
+
+  let labels = [];
+  let values = [];
+
+  // 🔹 Crear gráfico
   const chart = new Chart(ctx, {
-    type: 'line',
+    type: "line",
     data: {
-      labels: [],
+      labels: labels,
       datasets: [{
-        label: 'Valor sensor',
-        data: [],
-        borderColor: 'blue',
-        fill: false,
-        tension: 0.2
+        label: "Valor del sensor",
+        data: values,
+        borderWidth: 2,
+        tension: 0.3
       }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
     }
   });
 
-  // 🔹 Escuchar Firebase
-  ref.on("value", snapshot => {
-    const datos = snapshot.val();
-    if (!datos) return;
+  // 🔹 Referencia a Firebase
+  const historicoRef = database.ref("historico");
 
-    const etiquetas = [];
-    const valores = [];
+  // 🔹 Escuchar cambios en tiempo real
+  historicoRef.on("value", snapshot => {
+    const data = snapshot.val();
 
-    Object.keys(datos).forEach(fecha => {
-      etiquetas.push(fecha.split("_")[1]); // solo hora
-      valores.push(datos[fecha].valor);
-    });
-
-    // Actualizar tabla
-    const tabla = document.getElementById("tablaDatos");
+    labels.length = 0;
+    values.length = 0;
     tabla.innerHTML = "";
-    Object.keys(datos).forEach(fecha => {
+
+    if (!data) return;
+
+    Object.keys(data).forEach(key => {
+      const registro = data[key];
+
+      // Tabla
       const fila = document.createElement("tr");
       fila.innerHTML = `
-        <td>${fecha.replace("_"," ")}</td>
-        <td>${datos[fecha].valor}</td>
+        <td>${key.replaceAll("_", " ")}</td>
+        <td>${registro.valor}</td>
       `;
       tabla.appendChild(fila);
+
+      // Gráfico
+      labels.push(key.split("_")[1]);
+      values.push(registro.valor);
     });
 
-    // Actualizar gráfico
-    chart.data.labels = etiquetas;
-    chart.data.datasets[0].data = valores;
     chart.update();
   });
 </script>
